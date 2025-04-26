@@ -1,0 +1,39 @@
+services:
+  # Backend API service
+  - type: web
+    name: openhands-backend
+    env: python
+    buildCommand: pip install poetry && poetry install
+    startCommand: poetry run python -m openhands.server.main
+    envVars:
+      - key: LLM_MODEL
+        value: huggingface/meta-llama/CodeLlama-13b-Instruct-hf
+      - key: LLM_API_KEY
+        value: "YOUR_HUGGINGFACE_API_KEY" # Replace with your actual API key
+      - key: LLM_TEMPERATURE
+        value: 0.1
+      - key: LLM_MAX_OUTPUT_TOKENS
+        value: 1024
+      - key: PORT
+        value: 8000
+    plan: free
+    autoDeploy: false
+
+  # Frontend service
+  - type: web
+    name: openhands-frontend
+    env: node
+    buildCommand: cd frontend && npm install && npm run build
+    startCommand: cd frontend && npm run preview -- --port $PORT --host 0.0.0.0
+    envVars:
+      - key: VITE_BACKEND_HOST
+        fromService:
+          name: openhands-backend
+          type: web
+          property: host
+      - key: VITE_USE_TLS
+        value: true
+      - key: PORT
+        value: 10000
+    plan: free
+    autoDeploy: false

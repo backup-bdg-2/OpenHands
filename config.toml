@@ -1,0 +1,8 @@
+[core]
+default_agent = "OpenHandsAgent"
+
+[llm]
+model = "huggingface/meta-llama/CodeLlama-13b-Instruct-hf"
+api_key = "YOUR_HUGGINGFACE_API_KEY" # Replace with your actual API key
+temperature = 0.1
+max_output_tokens = 1024
