@@ -42,7 +42,7 @@ The `render.yaml` file already includes the necessary environment variables:
 ### Backend Service
 
 - **Environment**: Python
-- **Build Command**: `pip install poetry && poetry install`
+- **Build Command**: Uses Poetry installed in a temporary directory to avoid read-only filesystem issues
 - **Start Command**: `poetry run python -m openhands.server.main`
 - **Plan**: Free tier
 
@@ -52,6 +52,12 @@ The `render.yaml` file already includes the necessary environment variables:
 - **Build Command**: `cd frontend && npm install && npm run build`
 - **Start Command**: `cd frontend && npm run preview -- --port $PORT --host 0.0.0.0`
 - **Plan**: Free tier
+
+## Important Notes About Render.com
+
+- Render.com uses a read-only filesystem for most directories
+- Always use `/tmp` for any temporary files or installations during the build process
+- The home directory and most system directories are read-only
 
 ## Limitations on Free Tier
 
@@ -68,5 +74,6 @@ If you encounter issues during deployment:
 2. Ensure your Hugging Face API key is valid
 3. Verify that the Hugging Face model is accessible with your API key
 4. Check if the services are properly connected (frontend should be able to communicate with backend)
+5. If you see filesystem errors, make sure any file operations are using the `/tmp` directory
 
 For more detailed logs, you can access the logs section for each service in the Render dashboard.
