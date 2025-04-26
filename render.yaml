@@ -3,7 +3,6 @@ services:
   - type: web
     name: openhands-backend
     env: python
-    version: 3.11
     buildCommand: pip install poetry && poetry install
     startCommand: poetry run python -m openhands.server.main
     envVars:
