@@ -1,15 +1,18 @@
 # Hugging Face Integration for OpenHands
 
-This document explains how OpenHands has been configured to use Hugging Face's CodeLlama-13b-Instruct-hf model.
+This document explains how OpenHands has been configured to use Hugging Face's CodeLlama-13b-Instruct-hf model for AI-powered software development assistance.
 
 ## Configuration
 
 The integration uses the following configuration:
 
 1. **Model**: `huggingface/meta-llama/CodeLlama-13b-Instruct-hf`
+   - A powerful code-focused LLM from Meta
+   - 13 billion parameters optimized for code understanding and generation
+   - Fine-tuned with instruction following capabilities
 2. **API Key**: Your Hugging Face API key (replace the placeholder in config.toml)
-3. **Temperature**: 0.1
-4. **Max Output Tokens**: 1024
+3. **Temperature**: 0.1 (low temperature for more deterministic outputs)
+4. **Max Output Tokens**: 1024 (sufficient for most code generation tasks)
 
 ## Files Modified/Created
 
@@ -52,12 +55,32 @@ You can also use the helper script:
 
 ## Troubleshooting
 
-If you encounter issues:
+If you encounter issues with the Hugging Face integration:
 
-1. **API Key Issues**: Ensure your Hugging Face API key is valid and has access to the CodeLlama-13b-Instruct-hf model
-2. **Model Access**: Verify you have access to the model on Hugging Face (you may need to accept the model's terms of use)
-3. **Configuration**: Check that `config.toml` has the correct model name and API key
-4. **Dependencies**: Ensure all dependencies are installed (`pip install -e .` or `poetry install`)
+1. **API Key Issues**: 
+   - Ensure your Hugging Face API key is valid and has access to the CodeLlama-13b-Instruct-hf model
+   - Check that the API key is correctly set in both `config.toml` and environment variables
+   - Verify API key permissions in your Hugging Face account settings
+
+2. **Model Access**: 
+   - Verify you have access to the model on Hugging Face (you may need to accept the model's terms of use)
+   - Some models require explicit approval before they can be accessed via API
+   - Visit the model page on Hugging Face and check for any usage restrictions
+
+3. **Configuration**: 
+   - Check that `config.toml` has the correct model name and API key
+   - Ensure the model name format is correct: `huggingface/meta-llama/CodeLlama-13b-Instruct-hf`
+   - Verify that environment variables aren't overriding your configuration
+
+4. **Dependencies**: 
+   - Ensure all dependencies are installed (`pip install -e .` or `poetry install`)
+   - Make sure you have the latest version of LiteLLM that supports Hugging Face
+   - Check for any Python version compatibility issues
+
+5. **Rate Limits and Quotas**:
+   - Be aware of Hugging Face's rate limits and quotas for API usage
+   - Monitor your usage in the Hugging Face dashboard
+   - Consider implementing backoff strategies for high-volume usage
 
 ## Resources
 
