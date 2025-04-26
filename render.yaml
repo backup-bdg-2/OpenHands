@@ -3,7 +3,7 @@ services:
   - type: web
     name: openhands-backend
     env: python
-    buildCommand: export POETRY_HOME="/tmp/poetry" && curl -sSL https://install.python-poetry.org | python3 - && export PATH="/tmp/poetry/bin:$PATH" && poetry env use python3.12 && poetry install
+    buildCommand: export POETRY_HOME="/tmp/poetry" && curl -sSL https://install.python-poetry.org | python3 - && export PATH="/tmp/poetry/bin:$PATH" && poetry && poetry install
     startCommand: export POETRY_HOME="/tmp/poetry" && export PATH="/tmp/poetry/bin:$PATH" && poetry run python -m openhands.server.main
     envVars:
       - key: LLM_MODEL
