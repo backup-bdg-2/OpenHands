@@ -3,8 +3,18 @@ services:
   - type: web
     name: openhands-backend
     env: python
-    buildCommand: export POETRY_HOME="/tmp/poetry" && curl -sSL https://install.python-poetry.org | python3 - && export PATH="/tmp/poetry/bin:$PATH" && poetry && poetry install
-    startCommand: export POETRY_HOME="/tmp/poetry" && export PATH="/tmp/poetry/bin:$PATH" && poetry run python -m openhands.server.main
+    buildCommand: |
+      export POETRY_HOME="/tmp/poetry" && 
+      curl -sSL https://install.python-poetry.org | python3 - && 
+      export PATH="/tmp/poetry/bin:$PATH" && 
+      poetry && 
+      poetry install &&
+      cd frontend && 
+      npm install && 
+      npm run build && 
+      mkdir -p ../frontend/build && 
+      cp -r build/* ../frontend/build/
+    startCommand: export POETRY_HOME="/tmp/poetry" && export PATH="/tmp/poetry/bin:$PATH" && export SERVE_FRONTEND=true && poetry run python -m openhands.server.main
     envVars:
       - key: LLM_MODEL
         value: huggingface/meta-llama/CodeLlama-13b-Instruct-hf
@@ -16,6 +26,8 @@ services:
         value: 1024
       - key: PORT
         value: 8000
+      - key: SERVE_FRONTEND
+        value: "true"
     plan: free
     autoDeploy: false
 
