@@ -3,11 +3,11 @@
 Part of this Linter module is adapted from Aider (Apache 2.0 License, [original
 code](https://github.com/paul-gauthier/aider/blob/main/aider/linter.py)).
 - Please see the [original repository](https://github.com/paul-gauthier/aider) for more information.
-- The detailed implementation of the linter can be found at: https://github.com/All-Hands-AI/openhands-aci.
+- The detailed implementation of the linter can be found in the openhands_py311 module.
 """
 
 try:
-    from openhands_aci.linter import DefaultLinter, LintResult
+    from openhands_py311.linter import DefaultLinter, LintResult
     __all__ = ['DefaultLinter', 'LintResult']
 except ImportError:
     import logging
@@ -19,7 +19,7 @@ except ImportError:
     from pathlib import Path
     from typing import Dict, List, Optional, Tuple, Union
     
-    logging.warning("openhands_aci module not found. Using enhanced fallback linter implementation.")
+    logging.warning("openhands_py311 module not found. Using enhanced fallback linter implementation.")
     
     @dataclass
     class LintResult:
