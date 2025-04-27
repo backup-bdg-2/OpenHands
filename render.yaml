@@ -11,9 +11,7 @@ services:
       poetry install &&
       cd frontend && 
       npm install && 
-      npm run build && 
-      mkdir -p ../frontend/build && 
-      cp -r build/* ../frontend/build/
+      npm run build
     startCommand: export POETRY_HOME="/tmp/poetry" && export PATH="/tmp/poetry/bin:$PATH" && export SERVE_FRONTEND=true && poetry run python -m openhands.server.main
     envVars:
       - key: LLM_MODEL
