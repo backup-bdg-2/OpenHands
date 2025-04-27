@@ -14,9 +14,13 @@ from openhands.server.middleware import (
 from openhands.server.static import SPAStaticFiles
 
 if os.getenv('SERVE_FRONTEND', 'true').lower() == 'true':
-    base_app.mount(
-        '/', SPAStaticFiles(directory='./frontend/build', html=True), name='dist'
-    )
+    frontend_dir = './frontend/build'
+    if os.path.exists(frontend_dir):
+        base_app.mount(
+            '/', SPAStaticFiles(directory=frontend_dir, html=True), name='dist'
+        )
+    else:
+        print(f"Warning: Frontend directory '{frontend_dir}' does not exist. Not serving frontend files.")
 
 base_app.add_middleware(
     LocalhostCORSMiddleware,
