@@ -8,9 +8,10 @@ import os
 import re
 import subprocess
 import tempfile
+import shutil
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union, Any
 
 @dataclass
 class LintResult:
@@ -108,30 +109,92 @@ class DefaultLinter:
     
     This class provides linting functionality for code files, detecting syntax errors
     and other issues. It supports multiple languages including Python, JavaScript, TypeScript,
-    and others based on file extension.
+    Swift, C++, Lua, Luau, and others based on file extension.
     """
     def __init__(self):
         """Initialize the linter with supported language configurations."""
         self.language_configs = {
+            # Python
             "py": {
                 "command": ["python", "-m", "pyflakes"],
                 "regex": r"^(.+):(\d+):(\d+): (.+)$",
+                "check_command": ["python", "-m", "py_compile"],
+                "comment_style": "#",
             },
+            # JavaScript
             "js": {
-                "command": ["node", "--check"],
-                "regex": r"^(.+):(\d+):(\d+): (.+)$",
+                "command": ["eslint", "--format", "compact"],
+                "regex": r"^(.+): line (\d+), col (\d+), (.+)$",
+                "check_command": ["node", "--check"],
+                "comment_style": "//",
             },
+            # TypeScript
             "ts": {
-                "command": ["node", "--check"],
-                "regex": r"^(.+):(\d+):(\d+): (.+)$",
+                "command": ["eslint", "--format", "compact"],
+                "regex": r"^(.+): line (\d+), col (\d+), (.+)$",
+                "check_command": ["tsc", "--noEmit"],
+                "comment_style": "//",
             },
+            # JSX
             "jsx": {
-                "command": ["node", "--check"],
-                "regex": r"^(.+):(\d+):(\d+): (.+)$",
+                "command": ["eslint", "--format", "compact"],
+                "regex": r"^(.+): line (\d+), col (\d+), (.+)$",
+                "check_command": ["node", "--check"],
+                "comment_style": "//",
             },
+            # TSX
             "tsx": {
-                "command": ["node", "--check"],
+                "command": ["eslint", "--format", "compact"],
+                "regex": r"^(.+): line (\d+), col (\d+), (.+)$",
+                "check_command": ["tsc", "--noEmit"],
+                "comment_style": "//",
+            },
+            # Swift
+            "swift": {
+                "command": ["swiftlint", "lint", "--quiet"],
                 "regex": r"^(.+):(\d+):(\d+): (.+)$",
+                "check_command": ["swift", "-syntax-only"],
+                "comment_style": "//",
+            },
+            # C++
+            "cpp": {
+                "command": ["clang-tidy", "-quiet"],
+                "regex": r"^(.+):(\d+):(\d+): (.+)$",
+                "check_command": ["clang++", "-fsyntax-only", "-std=c++17"],
+                "comment_style": "//",
+            },
+            # C
+            "c": {
+                "command": ["clang-tidy", "-quiet"],
+                "regex": r"^(.+):(\d+):(\d+): (.+)$",
+                "check_command": ["clang", "-fsyntax-only"],
+                "comment_style": "//",
+            },
+            # Lua
+            "lua": {
+                "command": ["luacheck", "--no-color"],
+                "regex": r"^(.+):(\d+):(\d+): (.+)$",
+                "check_command": ["luac", "-p"],
+                "comment_style": "--",
+            },
+            # Luau (Roblox Lua)
+            "luau": {
+                "command": ["luau-analyze"],
+                "regex": r"^(.+):(\d+):(\d+): (.+)$",
+                "check_command": ["luau", "--parse"],
+                "comment_style": "--",
+            },
+            # HTML
+            "html": {
+                "command": ["htmlhint"],
+                "regex": r"^(.+): line (\d+), col (\d+), (.+)$",
+                "comment_style": "<!--",
+            },
+            # CSS
+            "css": {
+                "command": ["stylelint"],
+                "regex": r"^(.+):(\d+):(\d+): (.+)$",
+                "comment_style": "/*",
             },
         }
         
@@ -146,9 +209,90 @@ class DefaultLinter:
         """
         ext = os.path.splitext(file_path)[1].lstrip('.')
         return ext if ext in self.language_configs else None
+    
+    def _is_tool_available(self, command: str) -> bool:
+        """Check if a command-line tool is available.
         
-    def _check_syntax(self, code: str, language: str) -> List[LintResult]:
-        """Check the syntax of the provided code.
+        Args:
+            command: The command to check.
+            
+        Returns:
+            True if the tool is available, False otherwise.
+        """
+        return shutil.which(command) is not None
+    
+    def _check_syntax_with_external_tool(self, code: str, language: str) -> List[LintResult]:
+        """Check syntax using an external tool.
+        
+        Args:
+            code: The code to check.
+            language: The language of the code.
+            
+        Returns:
+            A list of LintResult objects with any errors found.
+        """
+        results = []
+        config = self.language_configs.get(language)
+        
+        if not config or not config.get("check_command"):
+            return results
+        
+        check_command = config["check_command"]
+        
+        # Check if the command is available
+        if not self._is_tool_available(check_command[0]):
+            # Fall back to basic syntax check
+            return self._check_basic_syntax(code, language)
+        
+        # Create a temporary file with the code
+        with tempfile.NamedTemporaryFile(suffix=f".{language}", mode="w", delete=False) as temp_file:
+            temp_file.write(code)
+            temp_file_path = temp_file.name
+        
+        try:
+            # Run the check command
+            process = subprocess.run(
+                check_command + [temp_file_path],
+                capture_output=True,
+                text=True,
+                check=False
+            )
+            
+            # If the command failed, parse the error output
+            if process.returncode != 0:
+                result = LintResult(success=False)
+                
+                # Try to extract line and column information from the error output
+                error_lines = process.stderr.splitlines() or process.stdout.splitlines()
+                for error_line in error_lines:
+                    # Try to match the error line with the regex pattern
+                    match = re.search(config.get("regex", r"^(.+):(\d+):(\d+): (.+)$"), error_line)
+                    if match:
+                        result.add_error(
+                            line=int(match.group(2)),
+                            column=int(match.group(3)),
+                            message=match.group(4),
+                            file_path=temp_file_path
+                        )
+                    else:
+                        # If no match, add a generic error
+                        result.add_error(
+                            line=1,
+                            column=1,
+                            message=error_line,
+                            file_path=temp_file_path
+                        )
+                
+                results.append(result)
+        finally:
+            # Clean up the temporary file
+            if os.path.exists(temp_file_path):
+                os.remove(temp_file_path)
+        
+        return results
+    
+    def _check_basic_syntax(self, code: str, language: str) -> List[LintResult]:
+        """Check the syntax of the provided code using basic checks.
         
         Args:
             code: The code to check.
@@ -181,8 +325,38 @@ class DefaultLinter:
             stack = []
             lines = code.split('\n')
             
+            # Get the comment style for the language
+            comment_style = self.language_configs.get(language, {}).get("comment_style", "//")
+            
             for line_num, line in enumerate(lines, 1):
+                # Skip comments
+                if comment_style == "#" and "#" in line:
+                    line = line.split("#")[0]
+                elif comment_style == "//" and "//" in line:
+                    line = line.split("//")[0]
+                elif comment_style == "--" and "--" in line:
+                    line = line.split("--")[0]
+                
+                # Check for string literals to avoid checking brackets inside strings
+                in_string = False
+                string_char = None
+                
                 for col_num, char in enumerate(line, 1):
+                    # Handle string literals
+                    if char in ['"', "'"]:
+                        if not in_string:
+                            in_string = True
+                            string_char = char
+                        elif char == string_char:
+                            in_string = False
+                            string_char = None
+                        continue
+                    
+                    # Skip characters inside string literals
+                    if in_string:
+                        continue
+                    
+                    # Check brackets
                     if char in brackets:
                         stack.append((char, line_num, col_num))
                     elif char in brackets.values():
@@ -207,6 +381,72 @@ class DefaultLinter:
                         message=f"Unclosed bracket: '{bracket}'"
                     )
                     results.append(result)
+            
+            # Language-specific checks
+            if language in ["swift", "cpp", "c"]:
+                # Check for missing semicolons in C-like languages
+                for line_num, line in enumerate(lines, 1):
+                    # Skip comments and preprocessor directives
+                    if (comment_style == "//" and "//" in line) or line.strip().startswith("#"):
+                        continue
+                    
+                    # Check if line should end with semicolon
+                    line = line.strip()
+                    if (line and 
+                        not line.endswith(";") and 
+                        not line.endswith("{") and 
+                        not line.endswith("}") and
+                        not line.endswith(":") and
+                        not line.startswith("#")):
+                        
+                        # Exclude function declarations and control structures
+                        if not any(keyword in line for keyword in ["if", "else", "for", "while", "switch", "case", "func", "class", "struct"]):
+                            result = LintResult(success=False)
+                            result.add_error(
+                                line=line_num,
+                                column=len(line),
+                                message="Missing semicolon at end of line"
+                            )
+                            results.append(result)
+            
+            elif language in ["lua", "luau"]:
+                # Check for common Lua syntax errors
+                for line_num, line in enumerate(lines, 1):
+                    # Skip comments
+                    if "--" in line:
+                        line = line.split("--")[0]
+                    
+                    # Check for misuse of '=' instead of '==' in conditions
+                    if "if" in line and "=" in line and "==" not in line and "~=" not in line:
+                        result = LintResult(success=False)
+                        result.add_error(
+                            line=line_num,
+                            column=line.find("="),
+                            message="Possible use of assignment (=) instead of equality (==) in condition"
+                        )
+                        results.append(result)
+        
+        return results
+    
+    def _check_syntax(self, code: str, language: str) -> List[LintResult]:
+        """Check the syntax of the provided code.
+        
+        This method first tries to use an external tool if available,
+        and falls back to basic syntax checking if not.
+        
+        Args:
+            code: The code to check.
+            language: The language of the code.
+            
+        Returns:
+            A list of LintResult objects with any errors found.
+        """
+        # First try with external tool
+        results = self._check_syntax_with_external_tool(code, language)
+        
+        # If no results or external tool not available, fall back to basic checks
+        if not results:
+            results = self._check_basic_syntax(code, language)
         
         return results
         
