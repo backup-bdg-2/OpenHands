@@ -8,6 +8,7 @@ readme = "README.md"
 repository = "https://github.com/All-Hands-AI/OpenHands"
 packages = [
   { include = "openhands/**/*" },
+  { include = "openhands_py311/**/*" },
   { include = "pyproject.toml" },
   { include = "poetry.lock" }
 ]
@@ -62,7 +63,6 @@ runloop-api-client = "0.31.0"
 libtmux = ">=0.37,<0.40"
 pygithub = "^2.5.0"
 joblib = "*"
-openhands-aci = {version = "^0.2.10", python = ">=3.12"}
 python-socketio = "^5.11.4"
 redis = "^5.2.0"
 sse-starlette = "^2.1.3"
