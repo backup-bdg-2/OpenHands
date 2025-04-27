@@ -43,6 +43,7 @@ pathspec = "^0.12.1"
 google-cloud-aiplatform = "*"
 anthropic = {extras = ["vertex"], version = "*"}
 tree-sitter = "^0.24.0"
+tree-sitter-languages = "*"  # Added missing dependency
 bashlex = "^0.18"
 pyjwt = "^2.9.0"
 dirhash = "*"
