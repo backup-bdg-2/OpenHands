@@ -1,8 +1,9 @@
-from setuptools import setup, find_packages
+#!/usr/bin/env python3
+from setuptools import find_packages, setup
 
 setup(
-    name="openhands_py311",
-    version="0.1.0",
+    name="openhands-ai",
+    version="0.35.0",
     description="Python 3.11 compatibility module for OpenHands",
     author="OpenHands Team",
     author_email="openhands@all-hands.dev",
