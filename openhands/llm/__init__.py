@@ -1,5 +1,4 @@
-from openhands.llm.async_llm import AsyncLLM
-from openhands.llm.llm import LLM
-from openhands.llm.streaming_llm import StreamingLLM
+from openhands.llm.factory import create_llm
+from openhands.llm.vllm_starcoder import VLLMStarCoder
 
-__all__ = ['LLM', 'AsyncLLM', 'StreamingLLM']
+__all__ = ['create_llm', 'VLLMStarCoder']

@@ -1,25 +1,28 @@
 from __future__ import annotations
 
 import json
-from typing import Any
+from typing import Any, Dict, List, Optional, Tuple, Union
 
-from pydantic import BaseModel, Field
-
-from openhands.core.config.condenser_config import (
-    StructuredSummaryCondenserConfig,
-)
-from openhands.core.logger import openhands_logger as logger
+from openhands.core.config.condenser_config import StructuredSummaryCondenserConfig
 from openhands.core.message import Message, TextContent
 from openhands.events.action.agent import CondensationAction
+from openhands.events.event import Event
 from openhands.events.observation.agent import AgentCondensationObservation
 from openhands.events.serialization.event import truncate_content
-from openhands.llm import LLM
+from openhands.llm import create_llm
 from openhands.memory.condenser.condenser import (
     Condensation,
     RollingCondenser,
     View,
 )
-
+from openhands.memory.condenser.impl.utils import (
+    get_event_content,
+    get_event_content_length,
+    get_event_timestamp,
+    get_event_type,
+    get_event_type_name,
+    is_event_condensable,
+)
 
 class StateSummary(BaseModel):
     """A structured representation summarizing the state of the agent and the task."""
@@ -166,10 +169,11 @@ class StructuredSummaryCondenser(RollingCondenser):
 
     def __init__(
         self,
-        llm: LLM,
+        llm_config,
         max_size: int = 100,
         keep_first: int = 1,
         max_event_length: int = 10_000,
+        summary_schema: Optional[Dict[str, Any]] = None,
     ):
         if keep_first >= max_size // 2:
             raise ValueError(
@@ -180,15 +184,21 @@ class StructuredSummaryCondenser(RollingCondenser):
         if max_size < 1:
             raise ValueError(f'max_size ({max_size}) cannot be non-positive')
 
-        if not llm.is_function_calling_active():
-            raise ValueError(
-                'LLM must support function calling to use StructuredSummaryCondenser'
-            )
-
         self.max_size = max_size
         self.keep_first = keep_first
         self.max_event_length = max_event_length
-        self.llm = llm
+        self.llm = create_llm(llm_config)
+        self.summary_schema = summary_schema or {
+            'user_context': 'Essential user requirements, goals, and clarifications',
+            'completed': 'Tasks completed so far, with brief results',
+            'pending': 'Tasks that still need to be done',
+            'current_state': 'Current variables, data structures, or relevant state',
+            'code_state': 'File paths, function signatures, data structures',
+            'tests': 'Failing cases, error messages, outputs',
+            'changes': 'Code edits, variable updates',
+            'deps': 'Dependencies, imports, external calls',
+            'version_control_status': 'Repository state, current branch, PR status, commit history',
+        }
 
         super().__init__()
 

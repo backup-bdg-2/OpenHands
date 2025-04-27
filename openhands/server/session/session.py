@@ -24,7 +24,7 @@ from openhands.events.observation import (
 from openhands.events.observation.error import ErrorObservation
 from openhands.events.serialization import event_from_dict, event_to_dict
 from openhands.events.stream import EventStreamSubscriber
-from openhands.llm.llm import LLM
+from openhands.llm import create_llm
 from openhands.mcp import fetch_mcp_tools_from_config
 from openhands.server.session.agent_session import AgentSession
 from openhands.server.session.conversation_init_data import ConversationInitData
@@ -180,12 +180,13 @@ class Session:
             await self.send_error(f'Failed to create agent session: {err_class}')
             return
 
-    def _create_llm(self, agent_cls: str | None) -> LLM:
+    def _create_llm(self, agent_cls: str | None) -> Any:
         """
         Initialize LLM, extracted for testing.
+        Uses the hardcoded VLLMStarCoder implementation.
         """
         agent_name = agent_cls if agent_cls is not None else 'agent'
-        return LLM(
+        return create_llm(
             config=self.config.get_llm_config_from_agent(agent_name),
             retry_listener=self._notify_on_llm_retry,
         )

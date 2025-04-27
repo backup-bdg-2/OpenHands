@@ -1,11 +1,11 @@
 [tool.poetry]
-name = "openhands-ai"
-version = "0.34.0"
-description = "OpenHands: Code Less, Make More"
-authors = ["OpenHands"]
+name = "backdoor-ai"
+version = "1.0.0"
+description = "Backdoor AI: Code Less, Make More"
+authors = ["Backdoor AI"]
 license = "MIT"
 readme = "README.md"
-repository = "https://github.com/All-Hands-AI/OpenHands"
+repository = "https://github.com/yourusername/BackdoorAI"
 packages = [
   { include = "openhands/**/*" },
   { include = "openhands_py311/**/*" },
@@ -15,6 +15,7 @@ packages = [
 
 [tool.poetry.dependencies]
 python = "^3.11.11"
+vllm = "^0.4.0"
 litellm = "^1.60.0"
 aiohttp = ">=3.9.0,!=3.11.13"  # Pin to avoid yanked version 3.11.13
 google-generativeai = "*" # To use litellm with Gemini Pro API
