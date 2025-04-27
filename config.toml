@@ -2,7 +2,7 @@
 default_agent = "OpenHandsAgent"
 
 [llm]
-model = "huggingface/meta-llama/CodeLlama-13b-Instruct-hf"
-api_key = "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" # Replace with your actual API key
+model = "bigcode/starcoder"
+base_url = "http://localhost:8000/v1/completions"
 temperature = 0.1
 max_output_tokens = 1024
