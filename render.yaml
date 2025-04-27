@@ -1,7 +1,7 @@
 services:
   # Backend API service
   - type: web
-    name: openhands-backend
+    name: backend v1
     env: python
     buildCommand: |
       export POETRY_HOME="/tmp/poetry" && 
@@ -31,7 +31,7 @@ services:
 
   # Frontend service
   - type: web
-    name: openhands-frontend
+    name: frontend v1
     env: node
     buildCommand: cd frontend && npm install && npm run build
     startCommand: cd frontend && npm run preview -- --port $PORT --host 0.0.0.0
